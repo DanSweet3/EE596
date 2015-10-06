@@ -1,9 +1,4 @@
 '''
-Created on Oct 6, 2015
-
-@author: Dan
-'''
-'''
 Created on Oct 1, 2015
 
 @author: Dan Sweet
@@ -36,7 +31,7 @@ def ProcessImage(image, binary_threshold, close_size, open_size):
     circ_mask = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(open_size,open_size))
     img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_OPEN, circ_mask)    
     cv2.imshow('OPENED', img_morph)
-     
+       
     #CONTOURS
     img_contours = np.zeros((image.shape[0], image.shape[1],3), np.uint8)     #Create empty image
     #Get contours, with hierarchy so I don't lose nested (child) contours
