@@ -27,6 +27,7 @@ def ProcessImage(image, binary_threshold, close_size, open_size):
     circ_mask = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(close_size,close_size))  
     img_morph = cv2.morphologyEx(img_thresh, cv2.MORPH_CLOSE, circ_mask)     
     cv2.imshow('CLOSED', img_morph)    
+    
     # Then open to get rid of white elements that are too small to be significant
     circ_mask = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(open_size,open_size))
     img_morph = cv2.morphologyEx(img_morph, cv2.MORPH_OPEN, circ_mask)    
