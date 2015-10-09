@@ -20,7 +20,7 @@ BACKGROUND_COLOR = (0,0,0)
 def ProcessImage(image, binary_threshold, close_size, open_size):
     _, img_thresh = cv2.threshold(image, binary_threshold, 250, cv2.THRESH_BINARY)    #Perform binary threshold to get black and white
     cv2.imshow('GRAY', image)                                            #Show Grayscale
-    cv2.imshow('THRESHOLD', img_thresh)                                     #Show binary threshold image
+    cv2.imshow('THRESHOLD', img_thresh)                                  #Show binary threshold image
     
     # MORPHING
     # First close the image to get rid of black dots within larger shapes
@@ -45,7 +45,8 @@ def ProcessImage(image, binary_threshold, close_size, open_size):
         #if a child contour, just draw as background color
         else:
             cv2.drawContours(img_contours, contours, contour_idx, BACKGROUND_COLOR, -1)
-    cv2.imshow('CONTOURS', img_contours)                                    #Show contoured/colored output
+    #Show contoured/colored output
+    cv2.imshow('CONTOURS', img_contours)                                    
     cv2.waitKey(0)
     
     return
