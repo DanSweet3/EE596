@@ -1,0 +1,1 @@
+EE596 HW1. Basic setup of Python and the OpenCV package. Project highlights major organs of interest in a few medical images. Uses opening and closing techniques and then finds and highlight contours.
