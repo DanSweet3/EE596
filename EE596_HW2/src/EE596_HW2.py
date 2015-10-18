@@ -16,15 +16,25 @@ K = 5                   #Number of K-means clusters
 
 IMG_TRAIN_PATH = '../face_training/'
 IMG_TRAIN_GT_PATH = '../face_training_groundtruth/'
+IMG_TEST_PATH = '../face_testing/'
 
 img_train = []
 img_train_gt = []
 ivec_train = []
 fvec_train = []
 center_train = []
-class_train = []
+label_train = []
+kmean_train = []
 
-kmean_img = []
+img_test = []
+img_test_gt = []
+ivec_test = []
+fvec_test = []
+center_test = []
+label_test = []
+kmean_test = []
+center_test = []
+predict_test = []
 
 #Read all training images into list
 for filename in os.listdir(IMG_TRAIN_PATH):
@@ -39,6 +49,15 @@ for filename in os.listdir(IMG_TRAIN_GT_PATH):
         img_thresh =cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_train_gt.append(img_thresh)
 
+#Read all test images into list
+for filename in os.listdir(IMG_TEST_PATH):
+    img = cv2.imread(os.path.join(IMG_TEST_PATH, filename))
+    if img is not None:
+        img_test.append(img)
+        
+############
+# TRAINING #
+############
 #Reshape all images  
 for x in img_train:
     ivec_train.append(x.reshape((-1,3)))
@@ -51,7 +70,6 @@ for y in ivec_train:
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, max_iter, epsilon)
 
 #Perform K-Means on all training images
-pixel_valkmean_img = []
 i = 0
 for fvec in fvec_train:
     ret, labels, centers = cv2.kmeans(fvec, K, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)     #Get K-Means
@@ -64,13 +82,16 @@ for fvec in fvec_train:
     xyz = labels.flatten()
     xyz2 = xyz.reshape((img_train[i].shape[0],img_train[i].shape[1]))
 
+#     center_train.append(centers)
+
     for c in centers:
         center_train.append(c)
+        
 #     cv2.imshow('Image: '+str(i),res2)
 #     cv2.waitKey()
     i += 1
     
-    kmean_img.append(xyz2)
+    kmean_train.append(xyz2)
     
 # cv2.destroyAllWindows()
 
@@ -83,29 +104,33 @@ for fvec in fvec_train:
 
 bayes_model = cv2.NormalBayesClassifier()
 
-for i in range(len(kmean_img)):
+for i in range(len(kmean_train)):
     # Count how many of each cluster are in image
     region_count = [0]*K
     overlap_count = [0]*K
     class_label = [0]*K
-    for x in range(kmean_img[i].shape[0]):
-        for y in range(kmean_img[i].shape[1]):
-            region_count[kmean_img[i][x,y]] += 1
-            if (kmean_img[i][x,y] & img_train_gt[i][x,y]):
-                overlap_count[kmean_img[i][x,y]] += 1
+    for x in range(kmean_train[i].shape[0]):
+        for y in range(kmean_train[i].shape[1]):
+            region_count[kmean_train[i][x,y]] += 1
+            if (kmean_train[i][x,y] & img_train_gt[i][x,y]):
+                overlap_count[kmean_train[i][x,y]] += 1
     #Check Strength of match:
     a = np.array(overlap_count, dtype = np.float)
     b = np.array(region_count, dtype = np.float)
     ratio = a/b
     
+    print a
+    print b
+    print ratio
+    
     x = 0
     for element in ratio:
         if (element >= 0.50):
             class_label[x] = 1
-            class_train.append(1)
+            label_train.append(1)
         else:
             class_label[x] = 0
-            class_train.append(0)
+            label_train.append(0)
         x+=1
     
     #class_train.append(class_label)    
@@ -117,25 +142,76 @@ for i in range(len(kmean_img)):
 #     print class_label
 
 
-# fjdaio = np.asarray(center_train)
-# print center_train
-# a1 = np.asarray(center_train)
-# print a1
-# a2 = np.float32(center_train)
-# print a2
-# b1 = np.asarray(class_train)
-# b2 = b1.astype(int)
-# 
-# flattened = [val for sublist in a2 for val in sublist]
-# # print flattened
-# qwerty = np.array(a2)
-# asdf = np.array([0.0,0.0,0.0])
-# b2 = np.array(class_train)
-#print qwerty
+center_train = np.array(center_train, np.float32)
+label_train = np.array(label_train, np.integer)
 
-bayes_model.train(np.array(np.float32(center_train)),cv2.CV_ROW_SAMPLE,np.array(class_train))
+bayes_model.train(center_train, label_train)
 
 
+###########
+# TESTING #
+###########
+#Reshape all images  
+for x in img_test:
+    ivec_test.append(x.reshape((-1,3)))
+
+#Convert to float for K-means
+for y in ivec_test:
+    fvec_test.append(np.float32(y))
+
+#Create K-Means Criteria
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, max_iter, epsilon)
+
+#Perform K-Means on all training images
+i = 0
+for fvec in fvec_test:
+    ret, labels, centers = cv2.kmeans(fvec, K, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)     #Get K-Means
+    #res = labels.reshape((img_train[i].shape))
+    cent = np.uint8(centers)                                                                #Convert centers from float to uint8
+    #center_train.append(cent)                                                               #Save Centers for later during training
+    res = cent[labels.flatten()]                                                            #Create new image based on center labels
+    res2 = res.reshape((img_test[i].shape))                                                #Reshape to original image shape
+    
+    xyz = labels.flatten()
+    xyz2 = xyz.reshape((img_test[i].shape[0],img_test[i].shape[1]))
+    
+    for c in centers:
+        
+        c = np.reshape(c, (-1,3))
+        prediction, _ = bayes_model.predict(np.array(c, np.float32))
+        if (prediction):
+            predict_test.append(1)   
+        else:
+            predict_test.append(0)
+
+    center_test.append(centers)
+    cv2.imshow('Image: '+str(i),res2)
+    cv2.waitKey()
+    i += 1
+    
+    kmean_test.append(xyz2)
+
+predict_test = np.reshape(predict_test,(-1,K))
+print predict_test
+print len(predict_test)
+center_test = np.array(center_test)
+#print center_test
+print kmean_test[0]
+
+
+for i in range(len(kmean_test)):
+    for x in range(kmean_test[i].shape[0]):
+        for y in range(kmean_test[i].shape[1]):
+            if(predict_test[i][kmean_test[i][x,y]] == 1):
+                #Should be skin
+                img_test[i][x,y] = [255,0,0]
+            #else:
+                #Not Skin
+            
+            
+            
+    cv2.imshow("Img: "+str(i), img_test[i])
+    cv2.waitKey()
 
 
 # for element in ratio:
