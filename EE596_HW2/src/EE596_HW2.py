@@ -13,7 +13,7 @@ import time
 
 start_time = time.time()
 
-DO_RG = 1               #'0' = RG, '1' = RGB
+DO_RG = 0               #'0' = RG, '1' = RGB
 DO_BAYES = 1            # 0' = BAYES , '1' = RANDOM TREES
 
 SAVE_OUTPUT_IMAGES = 1  #'0' No output images saved, '1' Save output images
@@ -32,7 +32,7 @@ if ((DO_RG==1)&(DO_BAYES==0)):
 elif((DO_RG==0)&(DO_BAYES==0)):
     epsilon = 1                                 #accuracy of K-means algorithm                             
     K_TRAIN = 9                                 #K during training phase
-    K_TEST = 30                                 #K during testing phase
+    K_TEST = 9                                 #K during testing phase
     CLASSIFICATION_THRESHOLD = 0.4
 #RGB AND BAYES
 elif((DO_RG==0)&(DO_BAYES==1)):
@@ -43,7 +43,7 @@ elif((DO_RG==0)&(DO_BAYES==1)):
 #RG AND BAYES   
 elif((DO_RG==1)&(DO_BAYES==1)):    
     epsilon = 1                                 #accuracy of K-means algorithm
-    K_TRAIN = 5                                 #K during training phase
+    K_TRAIN = 4                                 #K during training phase
     K_TEST = 10                                 #K during testing phase
     CLASSIFICATION_THRESHOLD = 0.75
 
